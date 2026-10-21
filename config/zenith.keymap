@@ -40,19 +40,6 @@
 };
 
 / {
-    behaviors {
-        // Streak-protected mod-tap for pinky home-row keys (col 1 & col 10)
-        p_mt: pinky_mod_tap {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "balanced";
-            tapping-term-ms = <220>;
-            quick-tap-ms = <175>;
-            require-prior-idle-ms = <150>;
-            bindings = <&kp>, <&kp>;
-        };
-    };
-
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
@@ -72,15 +59,15 @@
          * Esc/Ctrl  S/Alt   T    H    C    Y      Q      N    A    E    I/RCtrl  -/SYM
          * Shift     X       K    M    G    V      Z      P    '    /    .        Ret/Shift
          *
-         *                        Alt  GUI  NAV    Space  R    SYM
+         *                        Alt  Spc  NAV    GUI    R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
                 &lt ADJ TAB    &kp F        &kp D  &kp L  &kp W  &kp J        &kp SEMI   &kp B  &kp O    &kp U     &kp COMMA      &lt ADJ BSLH
-                &mt LCTRL ESC  &p_mt LALT S &kp T  &kp H  &kp C  &kp Y        &kp Q      &kp N  &kp A    &kp E     &p_mt RCTRL I  &lt SYM MINUS
+                &mt LCTRL ESC  &kp S        &kp T  &kp H  &kp C  &kp Y        &kp Q      &kp N  &kp A    &kp E     &kp I          &lt SYM MINUS
                 &kp LSHFT      &kp X        &kp K  &kp M  &kp G  &kp V        &kp Z      &kp P  &kp SQT  &kp FSLH  &kp DOT        &mt RSHFT RET
-                                            &kp LALT  &kp LGUI  &mo NAV       &kp SPACE  &kp R  &mo SYM
+                                            &kp LALT  &kp SPACE  &mo NAV      &kp LGUI   &kp R  &mo SYM
             >;
         };
 
@@ -91,7 +78,7 @@
          * Ctrl  Alt  GUI  Shft  Ctrl ---      Home  Left  Down  Up     Right End
          * Shift Undo Cut  Copy  Pste ---      ---   ---   ---   ---    ---   Shift
          *
-         *                 Alt   GUI  NAV      Bksp  Enter SYM
+         *                 Alt   Spc  NAV      Bksp  Enter SYM
          */
         nav_layer {
             display-name = "NAV";
@@ -110,7 +97,7 @@
          * Ctrl  !    @    #    $    %      ^    (    )    =    +    `
          * Shift ---  ---  ---  ---  ---    &    [    ]    {    }    Shift
          *
-         *                 Alt  GUI  NAV    Space Enter SYM
+         *                 Alt  Spc  NAV    GUI  Enter SYM
          */
         sym_layer {
             display-name = "SYM";
@@ -129,7 +116,7 @@
          * Ctrl   Unlck  USB   BLE   Tog   ---      ---   Prev    Play/Pse  Next      F11   F12
          * Shift  btclr  bt0   bt1   bt2   bt3      bt4   Mute    VolDn     VolUp     ---   Shift
          *
-         *                     Alt   GUI   NAV      ---   ---     SYM
+         *                     Alt   Spc   NAV      ---   ---     SYM
          */
         adjust_layer {
             display-name = "ADJ";
