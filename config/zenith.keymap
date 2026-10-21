@@ -1,5 +1,5 @@
 /*
- * PROTOTYPE 01 — PLACEMENT BEFORE TIMING
+ * PROTOTYPE 01 — PLACEMENT + OUTER/PINKY EXTENSIONS
  *
  * Assumed binding order:
  *
@@ -10,29 +10,49 @@
  *
  * Layer access:
  *
- *   Left inner thumb  -> NAV
- *   Right outer thumb -> SYM
- *   NAV + SYM         -> ADJ
- *
- * Design constraints:
- *
- *   - Preserve the pictured alphabet.
- *   - No timing-dependent bindings in this prototype.
- *   - Keep modifiers and layer access available across layers.
- *   - NAV means editing, not window management.
- *   - Leave unused positions explicitly unassigned.
- *   - Add macros only after identifying repeated friction.
+ *   Left inner thumb (38)  -> NAV
+ *   Right outer thumb (41) -> SYM
+ *   NAV + SYM              -> ADJ
+ *   Outer corners (00/11)  -> Hold for ADJ
  */
 
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
 
 #define BASE 0
 #define NAV  1
 #define SYM  2
 #define ADJ  3
 
+&mt {
+    flavor = "tap-preferred";
+    tapping-term-ms = <200>;
+    quick-tap-ms = <175>;
+    require-prior-idle-ms = <125>;
+};
+
+&lt {
+    flavor = "balanced";
+    tapping-term-ms = <200>;
+    quick-tap-ms = <175>;
+};
+
 / {
+    behaviors {
+        // Streak-protected mod-tap for pinky home-row keys (col 1 & col 10)
+        p_mt: pinky_mod_tap {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "balanced";
+            tapping-term-ms = <220>;
+            quick-tap-ms = <175>;
+            require-prior-idle-ms = <150>;
+            bindings = <&kp>, <&kp>;
+        };
+    };
+
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
@@ -48,55 +68,38 @@
         /*
          * BASE
          *
-         * Tab   F    D    L    W    J      ;    B    O    U    ,    \
-         * Ctrl  S    T    H    C    Y      Q    N    A    E    I    -
-         * Shift X    K    M    G    V      Z    P    '    /    .    Shift
+         * Tab/ADJ   F       D    L    W    J      ;      B    O    U    ,        \/ADJ
+         * Esc/Ctrl  S/Alt   T    H    C    Y      Q      N    A    E    I/RCtrl  -/SYM
+         * Shift     X       K    M    G    V      Z      P    '    /    .        Ret/Shift
          *
-         *                  Alt GUI NAV    Space R SYM
+         *                        Alt  GUI  NAV    Space  R    SYM
          */
-
         base_layer {
-            label = "BASE";
-
+            display-name = "BASE";
             bindings = <
-                &kp TAB   &kp F &kp D &kp L &kp W &kp J       &kp SEMI &kp B &kp O   &kp U    &kp COMMA &kp BSLH
-                &kp LCTRL &kp S &kp T &kp H &kp C &kp Y       &kp Q    &kp N &kp A   &kp E    &kp I     &kp MINUS
-                &kp LSHFT &kp X &kp K &kp M &kp G &kp V       &kp Z    &kp P &kp SQT &kp FSLH &kp DOT   &kp RSHFT
-
-                                  &mo SYM &kp SPACE &mo NAV   &kp LGUI &kp R &kp RALT
+                &lt ADJ TAB    &kp F        &kp D  &kp L  &kp W  &kp J        &kp SEMI   &kp B  &kp O    &kp U     &kp COMMA      &lt ADJ BSLH
+                &mt LCTRL ESC  &p_mt LALT S &kp T  &kp H  &kp C  &kp Y        &kp Q      &kp N  &kp A    &kp E     &p_mt RCTRL I  &lt SYM MINUS
+                &kp LSHFT      &kp X        &kp K  &kp M  &kp G  &kp V        &kp Z      &kp P  &kp SQT  &kp FSLH  &kp DOT        &mt RSHFT RET
+                                            &kp LALT  &kp LGUI  &mo NAV       &kp SPACE  &kp R  &mo SYM
             >;
         };
 
         /*
          * NAV
          *
-         * Esc   --- --- --- --- ---      Ins  PgDn PgUp Del  Bksp ---
-         * Ctrl  --- --- --- --- ---      Home Left Down Up   Right End
-         * Shift --- --- --- --- ---      ---  ---  ---  ---  ---   Shift
+         * Esc   ---  ---  ---   ---  ---      Ins   PgDn  PgUp  Del    Bksp  ---
+         * Ctrl  Alt  GUI  Shft  Ctrl ---      Home  Left  Down  Up     Right End
+         * Shift Undo Cut  Copy  Pste ---      ---   ---   ---   ---    ---   Shift
          *
-         *                  Alt GUI NAV    Bksp Enter SYM
-         *
-         * Editing grammar:
-         *
-         *   Direction             -> move
-         *   Shift + direction     -> select
-         *   Alt/GUI + direction   -> host-dependent navigation
-         *
-         * Example:
-         *
-         *   Hold NAV + left GUI, tap Left.
-         *   Add either Shift when selection is wanted.
+         *                 Alt   GUI  NAV      Bksp  Enter SYM
          */
-
         nav_layer {
-            label = "NAV";
-
+            display-name = "NAV";
             bindings = <
-                &kp ESC &none &none &none &none &none       &kp INS  &kp PG_DN &kp PG_UP &kp DEL &kp BSPC  &none
-                &trans  &none &none &none &none &none       &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT &kp HOME &kp END
-                &trans  &none &none &none &none &none       &none    &none     &none     &none   &none     &trans
-
-                              &trans &trans &trans         &kp BSPC &kp RET &trans
+                &kp ESC  &none      &none      &none      &none      &none        &kp INS   &kp PG_DN  &kp PG_UP  &kp DEL    &kp BSPC  &none
+                &trans   &kp LALT   &kp LGUI   &kp LSHFT  &kp LCTRL  &none        &kp HOME  &kp LEFT   &kp DOWN   &kp UP     &kp RIGHT &kp END
+                &trans   &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &none        &none     &none      &none      &none      &none     &trans
+                                               &trans     &trans     &trans       &kp BSPC  &kp RET    &trans
             >;
         };
 
@@ -107,52 +110,34 @@
          * Ctrl  !    @    #    $    %      ^    (    )    =    +    `
          * Shift ---  ---  ---  ---  ---    &    [    ]    {    }    Shift
          *
-         *                  Alt GUI NAV    Space Enter SYM
-         *
-         * Organizing rules:
-         *
-         *   - Digits run left to right.
-         *   - Parentheses, brackets, and braces use the same two columns.
-         *   - Shifted digits remain available with physical Shift.
-         *   - Base punctuation falls back where explicitly transparent.
-         *
-         * The four transparent left bottom-row positions retain
-         * X K M G V as shown by the bindings below; no special role
-         * is assigned to them in this prototype.
+         *                 Alt  GUI  NAV    Space Enter SYM
          */
-
         sym_layer {
-            label = "SYM";
-
+            display-name = "SYM";
             bindings = <
-                &trans &kp N1   &kp N2 &kp N3 &kp N4 &kp N5       &kp N6    &kp N7   &kp N8   &kp N9   &kp N0   &trans
-                &trans &kp EXCL &kp AT &kp HASH &kp DLLR &kp PRCNT &kp CARET &kp LPAR &kp RPAR &kp EQUAL &kp PLUS &kp GRAVE
-                &trans &trans   &trans &trans &trans &trans       &kp AMPS  &kp LBKT &kp RBKT &kp LBRC &kp RBRC &trans
-
-                                          &trans &trans &trans    &trans &kp RET &trans
+                &trans  &kp N1    &kp N2  &kp N3    &kp N4    &kp N5         &kp N6     &kp N7    &kp N8    &kp N9     &kp N0    &trans
+                &trans  &kp EXCL  &kp AT  &kp HASH  &kp DLLR  &kp PRCNT      &kp CARET  &kp LPAR  &kp RPAR  &kp EQUAL  &kp PLUS  &kp GRAVE
+                &trans  &trans    &trans  &trans    &trans    &trans         &kp AMPS   &kp LBKT  &kp RBKT  &kp LBRC   &kp RBRC  &trans
+                                          &trans    &trans    &trans         &trans     &kp RET   &trans
             >;
         };
 
         /*
-         * ADJ — active only while NAV and SYM are both held
+         * ADJ — active while NAV + SYM are held (or holding 00 / 11)
          *
-         * ---   F1   F2   F3   F4   F5     F6   F7   F8   F9   F10  ---
-         * Ctrl  ---  ---  ---  ---  ---    ---  ---  ---  F11  F12  ---
-         * Shift btclr bt0 bt1  bt2  bt3    bt4  ---  ---  ---  ---  Shift
+         * Boot   F1     F2    F3    F4    F5       F6    F7      F8        F9        F10   Boot
+         * Ctrl   Unlck  USB   BLE   Tog   ---      ---   Prev    Play/Pse  Next      F11   F12
+         * Shift  btclr  bt0   bt1   bt2   bt3      bt4   Mute    VolDn     VolUp     ---   Shift
          *
-         *                  Alt GUI NAV    --- --- SYM
-         *
+         *                     Alt   GUI   NAV      ---   ---     SYM
          */
-
         adjust_layer {
-            label = "ADJ";
-
+            display-name = "ADJ";
             bindings = <
-                &none  &kp F1 &kp F2 &kp F3 &kp F4 &kp F5   &kp F6 &kp F7 &kp F8 &kp F9  &kp F10 &none
-                &trans &none  &none  &none  &none  &none    &none  &none  &none  &kp F11 &kp F12 &none
-                &trans &bt BT_CLR &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4  &none  &none  &none   &none   &trans
-
-                                   &trans &trans &trans    &none &none &trans
+                &bootloader  &kp F1          &kp F2        &kp F3        &kp F4        &kp F5            &kp F6        &kp F7      &kp F8        &kp F9        &kp F10  &bootloader
+                &trans       &studio_unlock  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &none             &none         &kp C_PREV  &kp C_PP      &kp C_NEXT    &kp F11  &kp F12
+                &trans       &bt BT_CLR      &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3      &bt BT_SEL 4  &kp C_MUTE  &kp C_VOL_DN  &kp C_VOL_UP  &none    &trans
+                                                           &trans        &trans        &trans            &none         &none       &trans
             >;
         };
     };
