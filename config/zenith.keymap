@@ -25,6 +25,8 @@
 #define NAV  1
 #define SYM  2
 #define ADJ  3
+#define GAME  4
+#define G_EXT 5
 
 &mt {
     flavor = "tap-preferred";
@@ -125,6 +127,57 @@
                 &trans       &studio_unlock  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &none             &none         &kp C_PREV  &kp C_PP      &kp C_NEXT    &kp F11  &kp F12
                 &trans       &bt BT_CLR      &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3      &bt BT_SEL 4  &kp C_MUTE  &kp C_VOL_DN  &kp C_VOL_UP  &none    &trans
                                                            &trans        &trans        &trans            &none         &none       &trans
+            >;
+        };
+/*
+         * GAME (Layer 4) — Explicit Left-Half Gaming Mode
+         *
+         * Why no Mod-Taps here:
+         *   Every key uses pure &kp so holding Shift (sprint), Ctrl (crouch),
+         *   or WASD registers on the exact frame the switch actuates (0ms delay).
+         *
+         * Left-Hand Finger Anchor:
+         *   Ring = pos 14 (A) | Middle = pos 15 (W) | Index = pos 16 (D)
+         *   Down (S) sits directly below Middle on pos 27 (M).
+         *
+         * Esc    Tab    Q      E      R      T          ---  ---  ---  ---  ---  Exit
+         * Ctrl   Shift  A      W      D      F          ---  ---  ---  ---  ---  ---
+         * Alt    Z      X      S      C      V          ---  ---  ---  ---  ---  ---
+         *                      G      Space  MO(G_EXT)  ---  ---  Exit
+         */
+        game_layer {
+            display-name = "GAME";
+            bindings = <
+                &kp ESC    &kp TAB    &kp Q  &kp E  &kp R  &kp T          &none  &none  &none  &none  &none  &tog GAME
+                &kp LCTRL  &kp LSHFT  &kp A  &kp W  &kp D  &kp F          &none  &none  &none  &none  &none  &none
+                &kp LALT   &kp Z      &kp X  &kp S  &kp C  &kp V          &none  &none  &none  &none  &none  &none
+                                             &kp G  &kp SPACE  &mo G_EXT  &none  &none  &tog GAME
+            >;
+        };
+
+        /*
+         * G_EXT (Layer 5) — Situational / Far-Reach Sub-Layer (Hold Left Inner Thumb pos 38)
+         *
+         * Solves the "split keyboard reach" problem:
+         *   - Top row becomes 1-5 (weapon slots / abilities)
+         *   - Inner column (05, 17, 29) becomes 6, M (Map), I (Inventory)
+         *   - Col 1 (01, 13, 25) & Bottom row become U, O, P, J, K, L, B, N, Y
+         *   - Pos 14, 15, 16, 27 stay A, W, D, S so you can hold thumb + tap M/I/1-5
+         *     while strafing or sprinting without dropping movement input!
+         *   - Tap Outer Top-Left (pos 00) while holding thumb to exit GAME mode one-handed.
+         *
+         * Exit   1      2      3      4      5          ---  ---  ---  ---  ---  ---
+         * F1     O      A      W      D      M (Map)    ---  ---  ---  ---  ---  ---
+         * F2     P      U      S      B      I (Inv)    ---  ---  ---  ---  ---  ---
+         *                      N      Y      [HELD]     ---  ---  ---
+         */
+        game_ext_layer {
+            display-name = "G_EXT";
+            bindings = <
+                &tog GAME  &kp N1  &kp N2  &kp N3  &kp N4  &kp N5      &none  &none  &none  &none  &none  &none
+                &kp F1     &kp O   &trans  &trans  &trans  &kp M       &none  &none  &none  &none  &none  &none
+                &kp F2     &kp P   &kp U   &trans  &kp B   &kp I       &none  &none  &none  &none  &none  &none
+                                           &kp N   &kp Y   &trans      &none  &none  &none
             >;
         };
     };
