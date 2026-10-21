@@ -1,136 +1,161 @@
-//
-//                                                        ▀▀▀▀▀     ▀▀▀▀▀          ▀▀█▀▀
-//                                                        ▄▀▀▀▄  ▄  ▄▀▀▀▄  ▄  ▄▀▀▀▄  █  ▄▀▀▀▄
-//                                                        █   █  █  █   █  █  █   █  █  █   █
-//                                                         ▀▀▀   █   ▀▀▀   █   ▀▀▀   ▀   ▀▀▀
-//                                                               █      ▄▄▄█▄▄▄    █   █  
-//                                                               ▀      █  █  █     █▄█
-//                                                             ▀▀▀▀▀    █  █  █      ▀
-//                                                                      ▀  ▀  ▀
-//
-// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-       
+/*
+ * PROTOTYPE 01 — PLACEMENT BEFORE TIMING
+ *
+ * Assumed binding order:
+ *
+ *   00 01 02 03 04 05     06 07 08 09 10 11
+ *   12 13 14 15 16 17     18 19 20 21 22 23
+ *   24 25 26 27 28 29     30 31 32 33 34 35
+ *            36 37 38     39 40 41
+ *
+ * Layer access:
+ *
+ *   Left inner thumb  -> NAV
+ *   Right outer thumb -> SYM
+ *   NAV + SYM         -> ADJ
+ *
+ * Design constraints:
+ *
+ *   - Preserve the pictured alphabet.
+ *   - No timing-dependent bindings in this prototype.
+ *   - Keep modifiers and layer access available across layers.
+ *   - NAV means editing, not window management.
+ *   - Leave unused positions explicitly unassigned.
+ *   - Add macros only after identifying repeated friction.
+ */
 
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/bt.h>
-#include <dt-bindings/zmk/outputs.h>
 
 #define BASE 0
 #define NAV  1
 #define SYM  2
 #define ADJ  3
 
-&mt {
-  quick-tap-ms = <100>;
-  global-quick-tap;
-  flavor = "tap-preferred";
-  tapping-term-ms = <170>;
-};
-
 / {
-    
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
-        adjust_layer {
+        nav_sym_adjust {
             if-layers = <NAV SYM>;
             then-layer = <ADJ>;
         };
     };
 
-    combos {
-            compatible = "zmk,combos";
-            combo_esc {
-                timeout-ms = <50>;
-                key-positions = <0 1>;
-                bindings = <&kp ESC>;
-            };
-    };
+    keymap {
+        compatible = "zmk,keymap";
 
-    macros {
-        gif: gif {
-            label = "giphy";
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            bindings
-                = <&macro_press &kp LSHFT>
-                , <&macro_tap &kp N2>
-                , <&macro_release &kp LSHFT>
-                , <&macro_tap &kp G &kp I &kp F>
-                ;
+        /*
+         * BASE
+         *
+         * Tab   F    D    L    W    J      ;    B    O    U    ,    \
+         * Ctrl  S    T    H    C    Y      Q    N    A    E    I    -
+         * Shift X    K    M    G    V      Z    P    '    /    .    Shift
+         *
+         *                  Alt GUI NAV    Space R SYM
+         */
+
+        base_layer {
+            label = "BASE";
+
+            bindings = <
+                &kp TAB   &kp F &kp D &kp L &kp W &kp J       &kp SEMI &kp B &kp O   &kp U    &kp COMMA &kp BSLH
+                &kp LCTRL &kp S &kp T &kp H &kp C &kp Y       &kp Q    &kp N &kp A   &kp E    &kp I     &kp MINUS
+                &kp LSHFT &kp X &kp K &kp M &kp G &kp V       &kp Z    &kp P &kp SQT &kp FSLH &kp DOT   &kp RSHFT
+
+                                  &mo SYM &kp SPACE &mo NAV   &kp LGUI &kp R &kp RALT
+            >;
+        };
+
+        /*
+         * NAV
+         *
+         * Esc   --- --- --- --- ---      Ins  PgDn PgUp Del  Bksp ---
+         * Ctrl  --- --- --- --- ---      Home Left Down Up   Right End
+         * Shift --- --- --- --- ---      ---  ---  ---  ---  ---   Shift
+         *
+         *                  Alt GUI NAV    Bksp Enter SYM
+         *
+         * Editing grammar:
+         *
+         *   Direction             -> move
+         *   Shift + direction     -> select
+         *   Alt/GUI + direction   -> host-dependent navigation
+         *
+         * Example:
+         *
+         *   Hold NAV + left GUI, tap Left.
+         *   Add either Shift when selection is wanted.
+         */
+
+        nav_layer {
+            label = "NAV";
+
+            bindings = <
+                &kp ESC &none &none &none &none &none       &kp INS  &kp PG_DN &kp PG_UP &kp DEL &kp BSPC  &none
+                &trans  &none &none &none &none &none       &kp LEFT  &kp DOWN  &kp UP  &kp RIGHT &kp HOME &kp END
+                &trans  &none &none &none &none &none       &none    &none     &none     &none   &none     &trans
+
+                              &trans &trans &trans         &kp BSPC &kp RET &trans
+            >;
+        };
+
+        /*
+         * SYM
+         *
+         * Tab   1    2    3    4    5      6    7    8    9    0    \
+         * Ctrl  !    @    #    $    %      ^    (    )    =    +    `
+         * Shift ---  ---  ---  ---  ---    &    [    ]    {    }    Shift
+         *
+         *                  Alt GUI NAV    Space Enter SYM
+         *
+         * Organizing rules:
+         *
+         *   - Digits run left to right.
+         *   - Parentheses, brackets, and braces use the same two columns.
+         *   - Shifted digits remain available with physical Shift.
+         *   - Base punctuation falls back where explicitly transparent.
+         *
+         * The four transparent left bottom-row positions retain
+         * X K M G V as shown by the bindings below; no special role
+         * is assigned to them in this prototype.
+         */
+
+        sym_layer {
+            label = "SYM";
+
+            bindings = <
+                &trans &kp N1   &kp N2 &kp N3 &kp N4 &kp N5       &kp N6    &kp N7   &kp N8   &kp N9   &kp N0   &trans
+                &trans &kp EXCL &kp AT &kp HASH &kp DLLR &kp PRCNT &kp CARET &kp LPAR &kp RPAR &kp EQUAL &kp PLUS &kp GRAVE
+                &trans &trans   &trans &trans &trans &trans       &kp AMPS  &kp LBKT &kp RBKT &kp LBRC &kp RBRC &trans
+
+                                          &trans &trans &trans    &trans &kp RET &trans
+            >;
+        };
+
+        /*
+         * ADJ — active only while NAV and SYM are both held
+         *
+         * ---   F1   F2   F3   F4   F5     F6   F7   F8   F9   F10  ---
+         * Ctrl  ---  ---  ---  ---  ---    ---  ---  ---  F11  F12  ---
+         * Shift ---  ---  ---  ---  ---    ---  ---  ---  ---  ---  Shift
+         *
+         *                  Alt GUI NAV    --- --- SYM
+         *
+         * No reset, bootloader, pairing deletion, or output switching
+         * in the first prototype.
+         */
+
+        adjust_layer {
+            label = "ADJ";
+
+            bindings = <
+                &none  &kp F1 &kp F2 &kp F3 &kp F4 &kp F5   &kp F6 &kp F7 &kp F8 &kp F9  &kp F10 &none
+                &trans &none  &none  &none  &none  &none    &none  &none  &none  &kp F11 &kp F12 &none
+                &trans &none  &none  &none  &none  &none    &none  &none  &none  &none   &none   &trans
+
+                                   &trans &trans &trans    &none &none &trans
+            >;
         };
     };
-
-        keymap {
-                compatible = "zmk,keymap";
-// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-
-                base_layer {
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-label= "BASE"                              ;
-// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
- bindings = <
-// ╷           ╷           ╷           ╷           ╷           ╷           ╷   ╷           ╷           ╷           ╷           ╷           ╷           ╷
-
-&kp TAB     &kp Q      &kp W   &kp F     &kp P     &kp G   &kp J      &kp L            &kp U         &kp Y           &kp SEMI           &kp BSLH
-&mo NAV     &kp A      &kp R   &kp S     &kp T     &kp D   &kp H      &kp N            &kp E         &kp I           &kp O              &kp SQT
-&kp LSHIFT  &kp Z      &kp X   &kp C     &kp V     &kp B   &kp K      &kp M            &kp COMMA     &kp DOT         &kp FSLH           &mt RSHFT RET
-                                         &kp LALT  &kp LGUI  &mo SYM  &kp SPACE        &kp LCTRL     &kp K_APP       
-                        >;
-                };
-
-// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-
-
-                nav_layer {
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-label= "NAVI"                              ;
-// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
- bindings = <
-// ╷           ╷           ╷           ╷           ╷           ╷           ╷   ╷           ╷           ╷           ╷           ╷           ╷           ╷
-&trans  &kp INS    &kp PSCRN  &kp LC(PG_UP)  &kp LC(PG_DN)  &trans   &kp PG_UP  &kp LC(LEFT_ARROW)  &kp UP     &kp LC(RIGHT_ARROW)  &trans     &trans
-&trans  &kp LALT   &kp GUI    &kp LSHFT      &kp LCTRL      &kp ESC  &kp PG_DN  &kp LEFT            &kp DOWN   &kp RIGHT            &kp BSPC   &kp DEL
-&trans  &kp LC(Z)  &kp LC(X)  &kp LC(C)      &kp LC(V)      &trans   &trans     &kp HOME            &trans     &kp END               &trans     &trans
-                              &trans         &trans         &trans   &kp RET    &trans              &trans     
-                        >;
-                };
-
-// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-
-
-                sim_layer {
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-label= "SYM"                               ;
-// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
- bindings = <
-// ╷           ╷           ╷           ╷           ╷           ╷           ╷   ╷           ╷           ╷           ╷           ╷           ╷           ╷
-
-&kp GRAVE  &kp PRCNT  &kp AMPS  &kp QMARK  &kp PLUS   &kp AT    &kp DLLR       &kp UNDER  &kp LBKT     &kp RBKT  &kp EXCL       &kp HASH
-&kp TILDE   &kp FSLH   &kp LPAR  &kp EQUAL  &kp N0     &kp LBRC  &kp RBRC       &kp N1     &kp STAR     &kp RPAR  &kp MINUS      &kp CARET
-&studio_unlock  &kp N6     &kp N7    &kp N8     &kp N9     &kp PIPE  &kp BACKSLASH  &kp N2     &kp N3       &kp N4    &kp N5         &trans
-                             &trans     &trans     &trans    &kp RET        &trans     &trans       
-                        >;
-                };
-
-// ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-
-
-                adjust_layer {
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-label= "ADJ"                               ;
-// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
- bindings = <
-// ╷           ╷           ╷           ╷           ╷           ╷           ╷   ╷           ╷           ╷           ╷           ╷           ╷           ╷
-&trans         &trans      &trans      &trans      &trans      &trans      &trans  &kp K_PREV  &kp K_NEXT          &trans  &trans         &trans
-&bootloader        &trans             &trans             &trans        &trans        &trans        &trans  &kp K_PP    &trans              &trans  &trans         &bootloader
-&bt BT_CLR         &bt BT_SEL 0       &bt BT_SEL 1       &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4  &trans  &trans      &trans              &trans  &trans         &trans
-                   &trans             &trans             &trans        &trans        &trans        &trans                 
-                        >;
-                };
-        };
 };
