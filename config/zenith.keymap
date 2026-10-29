@@ -50,13 +50,14 @@
         };
     };
 
-    macros {
+macros {
         /*
          * 1. Opens in-game chat with a specific key (RET, T, Y, FSLH),
          *    disables GAME (exposing BASE/NAV/SYM), and enables G_CHAT interceptor.
-         *    wait-ms = <30> ensures the game registers the chat hotkey BEFORE typing begins.
          */
-        ZMK_MACRO_ONE_PARAM(chat_open,
+        chat_open: chat_open {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
             wait-ms = <30>;
             tap-ms = <10>;
             bindings
@@ -65,7 +66,7 @@
                 , <&tog GAME>
                 , <&tog G_CHAT>
                 ;
-        )
+        };
 
         /*
          * 2. Enters typing mode WITHOUT firing a hotkey first
@@ -83,7 +84,9 @@
          * 3. Sends RET or ESC to close the in-game chat box,
          *    disables G_CHAT, and immediately re-engages GAME mode.
          */
-        ZMK_MACRO_ONE_PARAM(chat_exit,
+        chat_exit: chat_exit {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
             wait-ms = <10>;
             tap-ms = <10>;
             bindings
@@ -92,7 +95,7 @@
                 , <&tog G_CHAT>
                 , <&tog GAME>
                 ;
-        )
+        };
     };
 
     keymap {
