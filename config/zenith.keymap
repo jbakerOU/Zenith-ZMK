@@ -298,38 +298,38 @@
         compatible = "zmk,keymap";
 
         /*
-         * Layer 0: BASE (Racket by GalileoBlues)
+         * Layer 0: BASE (Racket by GalileoBlues — Symmetric Outer Columns + Mouse Mods)
          *
-         * Tab         F    D    L     W    J      ;    B    O     U     ,     \
-         * Ret   S    T    H     C    Y      Q    N    A     E     I     -
-         * Esc         X    K    M     G    V      Z    P    '     /     .     Bksp
+         * Ctrl/Tab    F    D    L     W    J      ;    B    O     U     ,     \
+         * Shft/Ret    S    T    H     C    Y      Q    N    A     E     I     Shft/Bksp
+         * Alt/Esc     X    K    M     G    V      Z    P    '     /     .     -
          *                       Bksp  Spc  NAV    SmartShft  R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
-                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
-                &kp RET  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
-                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp BSPC
-                                           &kp BSPC  &kp SPACE  &mo NAV      &smart_shft   &kp R  &mo SYM
+                &mt LCTRL TAB  &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
+                &mt LSHFT RET  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &mt RSHFT BSPC
+                &mt LALT ESC   &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp MINUS
+                                             &kp BSPC  &kp SPACE  &mo NAV      &smart_shft      &kp R      &mo SYM
             >;
         };
 
         /*
-         * Layer 1: NAV
+         * Layer 1: NAV (Sticky/Holdable Callum Mods + Vim/Arrow Nav + C++ Ops)
          *
-         * Esc   mUndo mCut  mCopy mPste ---      Ins   PgDn  PgUp  Del    ---   ---
-         * ---   Alt   GUI   Shft  Ctrl  ---      Left  Down  Up    Right  Bksp  _
-         * ---   wUndo wCut  wCopy wPste ---      ---   ::    ->    Home   End   ---
-         *                   Del   ---   ---      Bksp  Ret   ---
+         * Esc   mUndo   mCut    mCopy    mPste    ---      Ins   PgDn  PgUp  Del    ---   ---
+         * Tab   skAlt   skGUI   skShft   skCtrl   ---      Left  Down  Up    Right  Bksp  _
+         * ---   wUndo   wCut    wCopy    wPste    ---      ---   ::    ->    Home   End   ---
+         *                       Bksp     Del      ---      Ret   ---   ---
          */
         nav_layer {
             display-name = "NAV";
             bindings = <
                 &kp ESC  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &trans       &kp INS   &kp PG_DN  &kp PG_UP  &kp DEL    &trans    &trans
-                &trans   &kp LALT   &kp LGUI   &kp LSHFT  &kp LCTRL  &trans       &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &kp BSPC  &kp UNDER
+                &kp TAB  &sk LALT   &sk LGUI   &sk LSHFT  &sk LCTRL  &trans       &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &kp BSPC  &kp UNDER
                 &trans   &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &trans       &trans    &cpp_scp   &cpp_arr   &kp HOME   &kp END   &trans
-                                               &kp DEL    &trans     &trans       &kp BSPC  &kp RET    &trans
+                                               &trans     &kp DEL    &trans       &kp RET   &trans     &trans
             >;
         };
 
@@ -339,7 +339,7 @@
          * `     1    2    3    4    5      6    7    8    9    0    *
          * ~     !    @    #    $    %      ^    (    )    =    +    -
          * _     :    {    }    \    |      &    [    ]    /    .    ,
-         *                 ---  ---  ---    BSPC Ret  ---
+         *                 Bksp Del  ---    Ret  ---  ---
          */
         sym_layer {
             display-name = "SYM";
@@ -347,7 +347,7 @@
                 &ht_grv 0 GRAVE &kp N1    &kp N2          &kp N3               &kp N4         &kp N5            &kp N6     &kp N7         &kp N8    &kp N9     &kp N0    &kp ASTRK
                 &kp TILDE       &kp EXCL  &kp AT          &kp HASH             &kp DLLR       &kp PRCNT         &kp CARET  &ht_par 0 LPAR &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
                 &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &ht_dqt 0 BSLH &ht_ang 0 PIPE    &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &ht_ang 0 COMMA
-                                                          &trans               &trans         &trans            &kp BSPC   &kp RET        &trans
+                                                          &trans               &kp DEL        &trans            &kp RET    &trans         &trans
             >;
         };
 
@@ -399,7 +399,7 @@
                 &trans          &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
                 &chat_exit RET  &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
                 &chat_exit ESC  &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
-                                                &trans  &trans  &trans      &trans  &trans  &trans
+                                                &trans  &trans  &trans      &trans          &trans  &trans
             >;
         };
     };
