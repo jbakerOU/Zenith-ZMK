@@ -34,9 +34,14 @@
     quick-tap-ms = <175>;
 };
 
+/*
+ * Note: 'quick-release' is intentionally omitted here so that tapping
+ * Sticky Shift (&smart_shft) followed by holding a Hold-Tap key on BASE
+ * (like ' for "|" or , for <|>) keeps Shift active until the hold-tap
+ * timer resolves (avoids ZMK Issue #3279).
+ */
 &sk {
     release-after-ms = <1000>;
-    quick-release;
     /delete-property/ ignore-modifiers;
 };
 
@@ -59,7 +64,27 @@
         };
 
         /*
-         * Tap = Single Opening Symbol   (  [  {  }  `  '  "  <
+         * Hold-Action Mod-Morphs (Evaluated AFTER hold-tap resolves to Hold!)
+         * Putting mod-morph INSIDE the hold action (Hold-Tap -> Mod-Morph -> Macro)
+         * avoids ZMK Issues #3161 and #3279 while allowing Shift+Tap to be a 100%
+         * native &kp!
+         */
+        mm_pair_quote: mod_morph_pair_quote {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&pair_sqt>, <&pair_dqt>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        mm_pair_comma: mod_morph_pair_comma {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp COMMA>, <&pair_ang>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        /*
+         * Tap = Single Symbol           (  [  {  }  `  '  "  <
          * Hold = Auto-Pair + Cursor In  () [] {} {}; `` '' "" <>
          */
         ht_par: hold_tap_paren {
@@ -128,27 +153,36 @@
         };
 
         /*
-         * Shift-Aware Quote on BASE Pos 32:
-         * - Unshifted: Tap = '  | Hold = '|'
-         * - Shifted:   Tap = "  | Hold = "|"
+         * Shift-Aware Quote Hold-Tap for BASE Pos 32 (&ht_sqt_smart 0 SQT):
+         * - Unshifted Tap:  '   (native &kp SQT)
+         * - Shifted Tap:    "   (native Shift + &kp SQT)
+         * - Unshifted Hold: '|' (&pair_sqt)
+         * - Shifted Hold:   "|" (&pair_dqt)
          */
-        smart_sqt: smart_quote_morph {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&ht_sqt 0 SQT>, <&ht_dqt 0 DQT>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
+        ht_sqt_smart: hold_tap_sqt_smart {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <190>;
+            quick-tap-ms = <150>;
+            bindings = <&mm_pair_quote>, <&kp>;
         };
 
         /*
-         * Shift-Aware Comma / Angle Bracket on BASE Pos 10:
-         * - Unshifted: Pure , (zero hold delay for normal typing!)
-         * - Shifted:   Tap = <  | Hold = <|> (C++ templates & includes!)
+         * Shift-Aware Comma / Angle Hold-Tap for BASE Pos 10 (&ht_comma_smart 0 COMMA):
+         * - Unshifted Tap:  ,   (native &kp COMMA)
+         * - Shifted Tap:    <   (native Shift + &kp COMMA)
+         * - Unshifted Hold: ,   (&kp COMMA)
+         * - Shifted Hold:   <|> (&pair_ang — C++ templates & #include <|>!)
          */
-        smart_comma: smart_comma_morph {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&kp COMMA>, <&ht_ang 0 LT>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
+        ht_comma_smart: hold_tap_comma_smart {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <190>;
+            quick-tap-ms = <150>;
+            require-prior-idle-ms = <125>;
+            bindings = <&mm_pair_comma>, <&kp>;
         };
     };
 
@@ -192,7 +226,11 @@
             tap-ms = <10>;
             bindings = <&kp LBRC &kp RBRC &kp SEMI &kp LEFT &kp LEFT>;
         };
-        /* Angle brackets <|> for C++ templates (releases Shift if held!) */
+        /*
+         * Angle brackets <|> for C++ templates:
+         * Uses &macro_release to clear any held/sticky Shift first,
+         * then explicitly switches back to &macro_tap to type < > Left!
+         */
         pair_ang: pair_ang {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -200,7 +238,7 @@
             tap-ms = <10>;
             bindings
                 = <&macro_release &kp LSHFT &kp RSHFT>
-                , <&kp LT &kp GT &kp LEFT>
+                , <&macro_tap &kp LT &kp GT &kp LEFT>
                 ;
         };
         /* Single quotes '|' */
@@ -211,7 +249,11 @@
             tap-ms = <10>;
             bindings = <&kp SQT &kp SQT &kp LEFT>;
         };
-        /* Double quotes "|" (releases Shift before pressing LEFT so it doesn't select!) */
+        /*
+         * Double quotes "|":
+         * Uses &macro_release to clear any held/sticky Shift first,
+         * then explicitly switches back to &macro_tap to type " " Left!
+         */
         pair_dqt: pair_dqt {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -219,7 +261,7 @@
             tap-ms = <10>;
             bindings
                 = <&macro_release &kp LSHFT &kp RSHFT>
-                , <&kp DQT &kp DQT &kp LEFT>
+                , <&macro_tap &kp DQT &kp DQT &kp LEFT>
                 ;
         };
         /* Backticks `|` */
@@ -300,26 +342,26 @@
          *
          * Zero-Latency Outer Pinkies & Thumbs (Modifiers live on NAV home row):
          * - Pos 00: Pure TAB
-         * - Pos 10: Smart Comma (Tap = , | Shift+Tap = < | Shift+Hold = <|>)
+         * - Pos 10: Smart Comma (&ht_comma_smart 0 COMMA: Tap = , | Shift+Tap = < | Shift+Hold = <|>)
          * - Pos 11: Pure BSLH (\)
          * - Pos 12: Smart Shift (1 tap = Sticky Shift, 2 taps = CAPS_WORD)
          * - Pos 24: Pure ESC (0ms key-down!)
-         * - Pos 32: Smart Quote (Tap = ' | Hold = '|' | Shift+Tap = " | Shift+Hold = "|")
-         * - Pos 35: Pure DEL (or &kp LGUI)
+         * - Pos 32: Smart Quote (&ht_sqt_smart 0 SQT: Tap = ' | Hold = '|' | Shift+Tap = " | Shift+Hold = "|")
+         * - Pos 35: Pure BSPC
          * - Pos 36 (Left Outer Thumb):  Pure BSPC (0ms key-down + instant repeat!)
          * - Pos 39 (Right Inner Thumb): Pure RET  (0ms key-down!)
          *
          * Tab         F    D    L     W    J      ;    B    O     U     ,     \
          * SmartShft   S    T    H     C    Y      Q    N    A     E     I     -
-         * Esc         X    K    M     G    V      Z    P    '     /     .     Del
+         * Esc         X    K    M     G    V      Z    P    '     /     .     Bksp
          *                       Bksp  Spc  NAV    Ret  R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
-                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &kp COMMA    &kp BSLH
-                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
-                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &ht_sqt 0 SQT &kp FSLH  &kp DOT      &kp BSPC
+                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O              &kp U     &ht_comma_smart 0 COMMA  &kp BSLH
+                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A              &kp E     &kp I                    &kp MINUS
+                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &ht_sqt_smart 0 SQT &kp FSLH  &kp DOT                  &kp BSPC
                                            &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
             >;
         };
@@ -356,7 +398,10 @@
          * - Pos 19 ((): Tap = (  | Hold = (|)
          * - Pos 26 ({): Tap = {  | Hold = {|}
          * - Pos 27 (}): Tap = }  | Hold = {|}; (C++ struct/class/lambda close!)
+         * - Pos 28 (\): Tap = \  | Hold = "|"  (Direct unshifted double-quote pair on SYM!)
+         * - Pos 29 (|): Tap = |  | Hold = <|>  (Direct unshifted angle-bracket pair on SYM!)
          * - Pos 31 ([): Tap = [  | Hold = [|]
+         * - Pos 35 (,): Tap = ,  | Hold = <|>  (Bonus: Hold comma on SYM also gives <|>!)
          *
          * `     1    2    3    4    5      6    7    8    9    0    *
          * ~     !    @    #    $    %      ^    (    )    =    +    -
@@ -366,10 +411,10 @@
         sym_layer {
             display-name = "SYM";
             bindings = <
-                &ht_grv 0 GRAVE &kp N1    &kp N2          &kp N3               &kp N4    &kp N5         &kp N6     &kp N7         &kp N8    &kp N9     &kp N0    &kp ASTRK
-                &kp TILDE       &kp EXCL  &kp AT          &kp HASH             &kp DLLR  &kp PRCNT      &kp CARET  &ht_par 0 LPAR &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
-                &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &ht_dqt 0 DQT  &ht_ang 0 LT       &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
-                                                          &trans               &trans    &trans         &kp BSPC   &kp RET        &trans
+                &ht_grv 0 GRAVE &kp N1    &kp N2          &kp N3               &kp N4         &kp N5            &kp N6     &kp N7         &kp N8    &kp N9     &kp N0    &kp ASTRK
+                &kp TILDE       &kp EXCL  &kp AT          &kp HASH             &kp DLLR       &kp PRCNT         &kp CARET  &ht_par 0 LPAR &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
+                &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &ht_dqt 0 BSLH &ht_ang 0 PIPE    &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &ht_ang 0 COMMA
+                                                          &trans               &trans         &trans            &kp BSPC   &kp RET        &trans
             >;
         };
 
@@ -394,10 +439,10 @@
         };
 
         /*
-         * Layer 4: GAME — Exact Original Left-Hand Layout + Atomic Chat Launchpad
+         * Layer 4: GAME — Left-Hand Layout + Atomic Chat Launchpad
          *
-         * Left Half (100% Restored to Your Exact Positions):
-         *   Row 1 (00-05): ESC    TAB    Q   E   R   T
+         * Left Half:
+         *   Row 1 (00-05): ESC    Q      E   TAB R   T
          *   Row 2 (12-17): LCTRL  LSHFT  A   W   D   F   (Pos 13 = LSHFT, 14 = A, 15 = W, 16 = D)
          *   Row 3 (24-29): LALT   Z      X   S   C   V   (Pos 27 = S)
          *   Thumbs(36-38): G      SPACE  mo(G_EXT)
@@ -415,9 +460,9 @@
             display-name = "GAME";
             bindings = <
                 &kp ESC    &kp Q      &kp E  &kp TAB &kp R     &kp T          &none         &none           &none         &none            &none  &to BASE
-                &kp LCTRL  &kp LSHFT  &kp A  &kp W  &kp D      &kp F          &chat_open Y  &chat_open RET  &chat_open T  &chat_open FSLH  &none  &none
-                &kp LALT   &kp Z      &kp X  &kp S  &kp C      &kp V          &none         &none           &none         &none            &none  &none
-                                             &kp G  &kp SPACE  &mo G_EXT      &kp BSPC      &chat_silent    &to BASE
+                &kp LCTRL  &kp LSHFT  &kp A  &kp W   &kp D     &kp F          &chat_open Y  &chat_open RET  &chat_open T  &chat_open FSLH  &none  &none
+                &kp LALT   &kp Z      &kp X  &kp S   &kp C     &kp V          &none         &none           &none         &none            &none  &none
+                                             &kp G   &kp SPACE &mo G_EXT      &kp BSPC      &chat_silent    &to BASE
             >;
         };
 
