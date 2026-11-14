@@ -397,9 +397,9 @@
             display-name = "G_CHAT";
             bindings = <
                 &trans          &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
-                &trans          &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
+                &chat_exit RET  &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
                 &chat_exit ESC  &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
-                                                &trans  &trans  &trans      &chat_exit RET  &trans  &trans
+                                                &trans  &trans  &trans      &trans  &trans  &trans
             >;
         };
     };
