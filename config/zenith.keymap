@@ -45,7 +45,7 @@
 };
 
 / {
-behaviors {
+    behaviors {
         /*
          * Smart Shift (Mod-Morph):
          * - 1st Tap: Sticky Shift (&sk LSHFT)
@@ -59,29 +59,96 @@ behaviors {
         };
 
         /*
-         * Tap = Single Opening Bracket  (  [  {
-         * Hold = Auto-Pair + Cursor In  () [] {}
+         * Tap = Single Opening Symbol   (  [  {  }  `  '  "  <
+         * Hold = Auto-Pair + Cursor In  () [] {} {}; `` '' "" <>
          */
         ht_par: hold_tap_paren {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <200>;
+            tapping-term-ms = <185>;
+            quick-tap-ms = <150>;
             bindings = <&pair_par>, <&kp>;
         };
         ht_bkt: hold_tap_bracket {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <200>;
+            tapping-term-ms = <185>;
+            quick-tap-ms = <150>;
             bindings = <&pair_bkt>, <&kp>;
         };
         ht_brc: hold_tap_brace {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <200>;
+            tapping-term-ms = <185>;
+            quick-tap-ms = <150>;
             bindings = <&pair_brc>, <&kp>;
+        };
+        ht_brc_semi: hold_tap_brace_semi {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <185>;
+            quick-tap-ms = <150>;
+            bindings = <&pair_brc_semi>, <&kp>;
+        };
+        ht_grv: hold_tap_grave {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <185>;
+            quick-tap-ms = <150>;
+            bindings = <&pair_grv>, <&kp>;
+        };
+        ht_sqt: hold_tap_sqt {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <190>;
+            quick-tap-ms = <150>;
+            bindings = <&pair_sqt>, <&kp>;
+        };
+        ht_dqt: hold_tap_dqt {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <190>;
+            quick-tap-ms = <150>;
+            bindings = <&pair_dqt>, <&kp>;
+        };
+        ht_ang: hold_tap_angle {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <190>;
+            quick-tap-ms = <150>;
+            bindings = <&pair_ang>, <&kp>;
+        };
+
+        /*
+         * Shift-Aware Quote on BASE Pos 32:
+         * - Unshifted: Tap = '  | Hold = '|'
+         * - Shifted:   Tap = "  | Hold = "|"
+         */
+        smart_sqt: smart_quote_morph {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&ht_sqt 0 SQT>, <&ht_dqt 0 DQT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        /*
+         * Shift-Aware Comma / Angle Bracket on BASE Pos 10:
+         * - Unshifted: Pure , (zero hold delay for normal typing!)
+         * - Shifted:   Tap = <  | Hold = <|> (C++ templates & includes!)
+         */
+        smart_comma: smart_comma_morph {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp COMMA>, <&ht_ang 0 LT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
         };
     };
 
@@ -95,7 +162,7 @@ behaviors {
     };
 
     macros {
-        /* Auto-closing bracket pairs (places cursor inside!) */
+        /* Auto-closing bracket & quote pairs (places cursor inside!) */
         pair_par: pair_par {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -116,6 +183,52 @@ behaviors {
             wait-ms = <10>;
             tap-ms = <10>;
             bindings = <&kp LBRC &kp RBRC &kp LEFT>;
+        };
+        /* C++ Struct/Class/Lambda close: {|}; */
+        pair_brc_semi: pair_brc_semi {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp LBRC &kp RBRC &kp SEMI &kp LEFT &kp LEFT>;
+        };
+        /* Angle brackets <|> for C++ templates (releases Shift if held!) */
+        pair_ang: pair_ang {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings
+                = <&macro_release &kp LSHFT &kp RSHFT>
+                , <&kp LT &kp GT &kp LEFT>
+                ;
+        };
+        /* Single quotes '|' */
+        pair_sqt: pair_sqt {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp SQT &kp SQT &kp LEFT>;
+        };
+        /* Double quotes "|" (releases Shift before pressing LEFT so it doesn't select!) */
+        pair_dqt: pair_dqt {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings
+                = <&macro_release &kp LSHFT &kp RSHFT>
+                , <&kp DQT &kp DQT &kp LEFT>
+                ;
+        };
+        /* Backticks `|` */
+        pair_grv: pair_grv {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp GRAVE &kp GRAVE &kp LEFT>;
         };
 
         /* C++ Quick Operators: -> and :: */
@@ -182,29 +295,31 @@ behaviors {
     keymap {
         compatible = "zmk,keymap";
 
-       /*
+        /*
          * Layer 0: BASE (Racket by GalileoBlues)
          *
          * Zero-Latency Outer Pinkies & Thumbs (Modifiers live on NAV home row):
          * - Pos 00: Pure TAB
+         * - Pos 10: Smart Comma (Tap = , | Shift+Tap = < | Shift+Hold = <|>)
          * - Pos 11: Pure BSLH (\)
          * - Pos 12: Smart Shift (1 tap = Sticky Shift, 2 taps = CAPS_WORD)
          * - Pos 24: Pure ESC (0ms key-down!)
+         * - Pos 32: Smart Quote (Tap = ' | Hold = '|' | Shift+Tap = " | Shift+Hold = "|")
          * - Pos 35: Pure DEL (or &kp LGUI)
          * - Pos 36 (Left Outer Thumb):  Pure BSPC (0ms key-down + instant repeat!)
          * - Pos 39 (Right Inner Thumb): Pure RET  (0ms key-down!)
          *
-         * Tab         F    D    L     W    J      ;    B    O    U    ,    \
-         * SmartShft   S    T    H     C    Y      Q    N    A    E    I    -
-         * Esc         X    K    M     G    V      Z    P    '    /    .    Del
+         * Tab         F    D    L     W    J      ;    B    O     U     ,     \
+         * SmartShft   S    T    H     C    Y      Q    N    A     E     I     -
+         * Esc         X    K    M     G    V      Z    P    '     /     .     Del
          *                       Bksp  Spc  NAV    Ret  R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
-                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O    &kp U     &kp COMMA  &kp BSLH
-                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A    &kp E     &kp I      &kp MINUS
-                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &kp SQT  &kp FSLH  &kp DOT    &kp DEL
+                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
+                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
+                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp DEL
                                            &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
             >;
         };
@@ -234,18 +349,14 @@ behaviors {
         };
 
         /*
-         * Layer 2: SYM (Continuous Number & Math/Code Entry Overhaul)
+         * Layer 2: SYM (Continuous Number & Math/Code Entry + Auto-Pair Hold-Taps)
          *
-         * Why you never have to lift off SYM anymore:
-         * - Pos 10 on BASE is `,` and Pos 23 on BASE is `-`.
-         * - Now on SYM:
-         *   * Pos 25 = `:` (Colon - for times 12:30, ratios, slices)
-         *   * Pos 26 = `{` and Pos 27 = `}` (Moved from right hand to free `.` and `/`)
-         *   * Pos 33 = `/` (Slash - fractions, dates 11/13/2026, paths)
-         *   * Pos 34 = `.` (Decimal point! Stays in the exact same spot as BASE!)
-         *   * Pos 35 = `,` (Comma - thousands 1,000, arrays, CSVs)
-         *   * Pos 39 (Right Inner Thumb) = `-` (Minus/Negative/Hyphen! Or tap Pos 23!)
-         *   * Pos 23 (Right Home Pinky)  = `-` (Stays `-` just like BASE, moved `~`/`GRAVE` to Pos 00!)
+         * Hold-to-Auto-Close Pairs (places cursor inside):
+         * - Pos 00 (`): Tap = `  | Hold = `|`
+         * - Pos 19 ((): Tap = (  | Hold = (|)
+         * - Pos 26 ({): Tap = {  | Hold = {|}
+         * - Pos 27 (}): Tap = }  | Hold = {|}; (C++ struct/class/lambda close!)
+         * - Pos 31 ([): Tap = [  | Hold = [|]
          *
          * `     1    2    3    4    5      6    7    8    9    0    *
          * ~     !    @    #    $    %      ^    (    )    =    +    -
@@ -255,15 +366,15 @@ behaviors {
         sym_layer {
             display-name = "SYM";
             bindings = <
-                &kp GRAVE  &kp N1     &kp N2          &kp N3    &kp N4    &kp N5         &kp N6     &kp N7          &kp N8    &kp N9     &kp N0    &kp ASTRK
-                &kp TILDE  &kp EXCL   &kp AT          &kp HASH  &kp DLLR  &kp PRCNT      &kp CARET  &ht_par 0 LPAR  &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
-                &kp UNDER  &kp COLON  &ht_brc 0 LBRC  &kp RBRC  &kp BSLH  &kp PIPE       &kp AMPS   &ht_bkt 0 LBKT  &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
-                                                      &trans    &trans    &trans         &kp BSPC   &kp RET         &trans
+                &ht_grv 0 GRAVE &kp N1    &kp N2          &kp N3               &kp N4    &kp N5         &kp N6     &kp N7         &kp N8    &kp N9     &kp N0    &kp ASTRK
+                &kp TILDE       &kp EXCL  &kp AT          &kp HASH             &kp DLLR  &kp PRCNT      &kp CARET  &ht_par 0 LPAR &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
+                &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &kp BSLH  &kp PIPE       &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
+                                                          &trans               &trans    &trans         &kp BSPC   &kp RET        &trans
             >;
         };
 
         /*
-         * Layer 3: ADJ — Active while NAV + SYM are held (or holding 00 / 11)
+         * Layer 3: ADJ — Active while NAV + SYM are held
          *
          * Uses &to GAME on Pos 17 / 18 so entering GAME always starts from a clean state.
          *
@@ -315,10 +426,10 @@ behaviors {
          *
          * Pos 14 (A), Pos 15 (W), Pos 16 (D), and Pos 27 (S) are &trans so movement never stops!
          *
-         * Exit   1      2      3      4      5          ---  ---  ---  ---  ---  ---
-         * F1     O      A(tr)  W(tr)  D(tr)  M (Map)    ---  ---  ---  ---  ---  ---
-         * F2     P      U      S(tr)  B      I (Inv)    ---  ---  ---  ---  ---  ---
-         *                      N      Y      [HELD]     ---  ---  ---
+         * Exit   1      2      3      4      5           ---  ---  ---  ---  ---  ---
+         * F1     O      A(tr)  W(tr)  D(tr)  M (Map)     ---  ---  ---  ---  ---  ---
+         * F2     P      U      S(tr)  B      I (Inv)     ---  ---  ---  ---  ---  ---
+         *                      N      Y      [HELD]      ---  ---  ---
          */
         game_ext_layer {
             display-name = "G_EXT";
