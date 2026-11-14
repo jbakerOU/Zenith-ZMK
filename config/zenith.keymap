@@ -301,17 +301,17 @@
          * Layer 0: BASE (Racket by GalileoBlues)
          *
          * Tab         F    D    L     W    J      ;    B    O     U     ,     \
-         * SmartShft   S    T    H     C    Y      Q    N    A     E     I     -
+         * Ret   S    T    H     C    Y      Q    N    A     E     I     -
          * Esc         X    K    M     G    V      Z    P    '     /     .     Bksp
-         *                       Bksp  Spc  NAV    Ret  R    SYM
+         *                       Bksp  Spc  NAV    SmartShft  R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
                 &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
-                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
+                &kp RET  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
                 &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp BSPC
-                                           &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
+                                           &kp BSPC  &kp SPACE  &mo NAV      &smart_shft   &kp R  &mo SYM
             >;
         };
 
