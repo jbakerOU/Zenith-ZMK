@@ -317,9 +317,9 @@
         base_layer {
             display-name = "BASE";
             bindings = <
-                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
+                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &kp COMMA    &kp BSLH
                 &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
-                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp DEL
+                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &ht_sqt 0 SQT &kp FSLH  &kp DOT      &kp BSPC
                                            &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
             >;
         };
@@ -368,7 +368,7 @@
             bindings = <
                 &ht_grv 0 GRAVE &kp N1    &kp N2          &kp N3               &kp N4    &kp N5         &kp N6     &kp N7         &kp N8    &kp N9     &kp N0    &kp ASTRK
                 &kp TILDE       &kp EXCL  &kp AT          &kp HASH             &kp DLLR  &kp PRCNT      &kp CARET  &ht_par 0 LPAR &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
-                &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &kp BSLH  &kp PIPE       &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
+                &kp UNDER       &kp COLON &ht_brc 0 LBRC  &ht_brc_semi 0 RBRC  &ht_dqt 0 DQT  &ht_ang 0 LT       &kp AMPS   &ht_bkt 0 LBKT &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
                                                           &trans               &trans    &trans         &kp BSPC   &kp RET        &trans
             >;
         };
@@ -414,7 +414,7 @@
         game_layer {
             display-name = "GAME";
             bindings = <
-                &kp ESC    &kp TAB    &kp Q  &kp E  &kp R      &kp T          &none         &none           &none         &none            &none  &to BASE
+                &kp ESC    &kp Q      &kp E  &kp TAB &kp R     &kp T          &none         &none           &none         &none            &none  &to BASE
                 &kp LCTRL  &kp LSHFT  &kp A  &kp W  &kp D      &kp F          &chat_open Y  &chat_open RET  &chat_open T  &chat_open FSLH  &none  &none
                 &kp LALT   &kp Z      &kp X  &kp S  &kp C      &kp V          &none         &none           &none         &none            &none  &none
                                              &kp G  &kp SPACE  &mo G_EXT      &kp BSPC      &chat_silent    &to BASE
