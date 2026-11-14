@@ -40,7 +40,51 @@
     /delete-property/ ignore-modifiers;
 };
 
+&caps_word {
+    continue-list = <UNDERSCORE MINUS BSPC DEL N1 N2 N3 N4 N5 N6 N7 N8 N9 N0>;
+};
+
 / {
+behaviors {
+        /*
+         * Smart Shift (Mod-Morph):
+         * - 1st Tap: Sticky Shift (&sk LSHFT)
+         * - 2nd Tap (while Shift is active): Caps Word (&caps_word)!
+         */
+        smart_shft: smart_shift {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&sk LSHFT>, <&caps_word>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        /*
+         * Tap = Single Opening Bracket  (  [  {
+         * Hold = Auto-Pair + Cursor In  () [] {}
+         */
+        ht_par: hold_tap_paren {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            bindings = <&pair_par>, <&kp>;
+        };
+        ht_bkt: hold_tap_bracket {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            bindings = <&pair_bkt>, <&kp>;
+        };
+        ht_brc: hold_tap_brace {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            bindings = <&pair_brc>, <&kp>;
+        };
+    };
+
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
@@ -50,21 +94,59 @@
         };
     };
 
-macros {
+    macros {
+        /* Auto-closing bracket pairs (places cursor inside!) */
+        pair_par: pair_par {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp LPAR &kp RPAR &kp LEFT>;
+        };
+        pair_bkt: pair_bkt {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp LBKT &kp RBKT &kp LEFT>;
+        };
+        pair_brc: pair_brc {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp LBRC &kp RBRC &kp LEFT>;
+        };
+
+        /* C++ Quick Operators: -> and :: */
+        cpp_arr: cpp_arrow {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp MINUS &kp GT>;
+        };
+        cpp_scp: cpp_scope {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings = <&kp COLON &kp COLON>;
+        };
+
         /*
          * 1. Opens in-game chat with a specific key (RET, T, Y, FSLH),
-         *    disables GAME (exposing BASE/NAV/SYM), and enables G_CHAT interceptor.
+         *    and atomically switches to G_CHAT (which disables GAME and exposes BASE).
          */
         chat_open: chat_open {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
-            wait-ms = <30>;
-            tap-ms = <10>;
+            wait-ms = <40>;
+            tap-ms = <30>;
             bindings
                 = <&macro_param_1to1>
                 , <&kp MACRO_PLACEHOLDER>
-                , <&tog GAME>
-                , <&tog G_CHAT>
+                , <&to G_CHAT>
                 ;
         };
 
@@ -77,23 +159,22 @@ macros {
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
-            bindings = <&tog GAME &tog G_CHAT>;
+            bindings = <&to G_CHAT>;
         };
 
         /*
          * 3. Sends RET or ESC to close the in-game chat box,
-         *    disables G_CHAT, and immediately re-engages GAME mode.
+         *    and atomically switches back to GAME (disabling G_CHAT).
          */
         chat_exit: chat_exit {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
-            wait-ms = <10>;
-            tap-ms = <10>;
+            wait-ms = <30>;
+            tap-ms = <30>;
             bindings
                 = <&macro_param_1to1>
                 , <&kp MACRO_PLACEHOLDER>
-                , <&tog G_CHAT>
-                , <&tog GAME>
+                , <&to GAME>
                 ;
         };
     };
@@ -101,65 +182,90 @@ macros {
     keymap {
         compatible = "zmk,keymap";
 
-        /*
+       /*
          * Layer 0: BASE (Racket by GalileoBlues)
          *
-         * Tab/ADJ   F    D    L    W    J      ;    B    O    U    ,    \/ADJ
-         * Ctrl      S    T    H    C    Y      Q    N    A    E    I    -
-         * sk(Shft)  X    K    M    G    V      Z    P    '    /    .    sk(Shft)
-         *                     Alt  Spc  NAV    GUI  R    SYM
+         * Zero-Latency Outer Pinkies & Thumbs (Modifiers live on NAV home row):
+         * - Pos 00: Pure TAB
+         * - Pos 11: Pure BSLH (\)
+         * - Pos 12: Smart Shift (1 tap = Sticky Shift, 2 taps = CAPS_WORD)
+         * - Pos 24: Pure ESC (0ms key-down!)
+         * - Pos 35: Pure DEL (or &kp LGUI)
+         * - Pos 36 (Left Outer Thumb):  Pure BSPC (0ms key-down + instant repeat!)
+         * - Pos 39 (Right Inner Thumb): Pure RET  (0ms key-down!)
+         *
+         * Tab         F    D    L     W    J      ;    B    O    U    ,    \
+         * SmartShft   S    T    H     C    Y      Q    N    A    E    I    -
+         * Esc         X    K    M     G    V      Z    P    '    /    .    Del
+         *                       Bksp  Spc  NAV    Ret  R    SYM
          */
         base_layer {
             display-name = "BASE";
             bindings = <
-                &lt ADJ TAB  &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O    &kp U     &kp COMMA  &lt ADJ BSLH
-                &kp LCTRL    &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A    &kp E     &kp I      &kp MINUS
-                &sk LSHFT    &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &kp SQT  &kp FSLH  &kp DOT    &sk RSHFT
-                                           &kp LALT  &kp SPACE  &mo NAV      &kp LGUI  &kp R  &mo SYM
+                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O    &kp U     &kp COMMA  &kp BSLH
+                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A    &kp E     &kp I      &kp MINUS
+                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &kp SQT  &kp FSLH  &kp DOT    &kp DEL
+                                           &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
             >;
         };
 
         /*
          * Layer 1: NAV
          *
-         * Esc   ---   ---   ---   ---   ---      Ins   PgDn  PgUp  Del    ---   ---
-         * ---   Alt   GUI   Shft  Ctrl  ---      Left  Down  Up    Right  Bksp  ---
-         * ---   Undo  Cut   Copy  Pste  ---      ---   ---   ---   Home   End   ---
-         *                   ---   ---   ---      Bksp  Ret   ---
+         * Cross-OS Undo / Cut / Copy / Paste:
+         * - Top Row (01-04):    macOS (Cmd + Z/X/C/V)
+         * - Home Row (13-16):   One-handed Modifiers (Alt, GUI, Shft, Ctrl)
+         * - Bottom Row (25-28): Windows/Linux (Ctrl + Z/X/C/V)
+         * - Right Side:         Vim/Arrow Nav + C++ (:: and ->) + Underscore (_)
+         *
+         * Esc   mUndo mCut  mCopy mPste ---      Ins   PgDn  PgUp  Del    ---   ---
+         * ---   Alt   GUI   Shft  Ctrl  ---      Left  Down  Up    Right  Bksp  _
+         * ---   wUndo wCut  wCopy wPste ---      ---   ::    ->    Home   End   ---
+         *                   Del   ---   ---      Bksp  Ret   ---
          */
         nav_layer {
             display-name = "NAV";
             bindings = <
-                &kp ESC  &trans     &trans     &trans     &trans     &trans       &kp INS   &kp PG_DN  &kp PG_UP  &kp DEL    &trans    &trans
-                &trans   &kp LALT   &kp LGUI   &kp LSHFT  &kp LCTRL  &trans       &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &kp BSPC  &trans
-                &trans   &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &trans       &trans    &trans     &trans     &kp HOME   &kp END   &trans
-                                               &trans     &trans     &trans       &kp BSPC  &kp RET    &trans
+                &kp ESC  &kp LG(Z)  &kp LG(X)  &kp LG(C)  &kp LG(V)  &trans       &kp INS   &kp PG_DN  &kp PG_UP  &kp DEL    &trans    &trans
+                &trans   &kp LALT   &kp LGUI   &kp LSHFT  &kp LCTRL  &trans       &kp LEFT  &kp DOWN   &kp UP     &kp RIGHT  &kp BSPC  &kp UNDER
+                &trans   &kp LC(Z)  &kp LC(X)  &kp LC(C)  &kp LC(V)  &trans       &trans    &cpp_scp   &cpp_arr   &kp HOME   &kp END   &trans
+                                               &kp DEL    &trans     &trans       &kp BSPC  &kp RET    &trans
             >;
         };
 
         /*
-         * Layer 2: SYM
+         * Layer 2: SYM (Continuous Number & Math/Code Entry Overhaul)
          *
-         * ---   1    2    3    4    5      6    7    8    9    0    *
-         * ---   !    @    #    $    %      ^    (    )    =    +    `
-         * ---   ---  ---  ---  \    |      &    [    ]    {    }    ---
-         *                 ---  ---  ---    ---  Ret  ---
+         * Why you never have to lift off SYM anymore:
+         * - Pos 10 on BASE is `,` and Pos 23 on BASE is `-`.
+         * - Now on SYM:
+         *   * Pos 25 = `:` (Colon - for times 12:30, ratios, slices)
+         *   * Pos 26 = `{` and Pos 27 = `}` (Moved from right hand to free `.` and `/`)
+         *   * Pos 33 = `/` (Slash - fractions, dates 11/13/2026, paths)
+         *   * Pos 34 = `.` (Decimal point! Stays in the exact same spot as BASE!)
+         *   * Pos 35 = `,` (Comma - thousands 1,000, arrays, CSVs)
+         *   * Pos 39 (Right Inner Thumb) = `-` (Minus/Negative/Hyphen! Or tap Pos 23!)
+         *   * Pos 23 (Right Home Pinky)  = `-` (Stays `-` just like BASE, moved `~`/`GRAVE` to Pos 00!)
+         *
+         * `     1    2    3    4    5      6    7    8    9    0    *
+         * ~     !    @    #    $    %      ^    (    )    =    +    -
+         * _     :    {    }    \    |      &    [    ]    /    .    ,
+         *                 ---  ---  ---    BSPC Ret  ---
          */
         sym_layer {
             display-name = "SYM";
             bindings = <
-                &trans  &kp N1    &kp N2  &kp N3    &kp N4    &kp N5         &kp N6     &kp N7    &kp N8    &kp N9     &kp N0    &kp ASTRK
-                &trans  &kp EXCL  &kp AT  &kp HASH  &kp DLLR  &kp PRCNT      &kp CARET  &kp LPAR  &kp RPAR  &kp EQUAL  &kp PLUS  &kp GRAVE
-                &trans  &trans    &trans  &trans    &kp BSLH  &kp PIPE       &kp AMPS   &kp LBKT  &kp RBKT  &kp LBRC   &kp RBRC  &trans
-                                          &trans    &trans    &trans         &trans     &kp RET   &trans
+                &kp GRAVE  &kp N1    &kp N2     &kp N3    &kp N4    &kp N5         &kp N6     &kp N7    &kp N8    &kp N9     &kp N0    &kp ASTRK
+                &kp TILDE  &kp EXCL  &kp AT     &kp HASH  &kp DLLR  &kp PRCNT      &kp CARET  &kp LPAR  &kp RPAR  &kp EQUAL  &kp PLUS  &kp MINUS
+                &kp UNDER  &kp COLON &kp LBRC   &kp RBRC  &kp BSLH  &kp PIPE       &kp AMPS   &kp LBKT  &kp RBKT  &kp FSLH   &kp DOT   &kp COMMA
+                                                &trans    &trans    &trans         &kp BSPC   &kp RET   &trans
             >;
         };
 
         /*
          * Layer 3: ADJ — Active while NAV + SYM are held (or holding 00 / 11)
          *
-         * Added &tog GAME on Pos 17 (Left Inner Home) and Pos 18 (Right Inner Home)
-         * so you have a dedicated button to enter GAME mode from BASE.
+         * Uses &to GAME on Pos 17 / 18 so entering GAME always starts from a clean state.
          *
          * Boot   F1     F2    F3    F4    F5       F6    F7      F8        F9        F10   Boot
          * ---    Unlck  USB   BLE   Tog   GAME     GAME  Prev    Play/Pse  Next      F11   F12
@@ -170,41 +276,48 @@ macros {
             display-name = "ADJ";
             bindings = <
                 &bootloader  &kp F1          &kp F2        &kp F3        &kp F4        &kp F5            &kp F6        &kp F7      &kp F8        &kp F9        &kp F10  &bootloader
-                &trans       &studio_unlock  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &tog GAME         &tog GAME     &kp C_PREV  &kp C_PP      &kp C_NEXT    &kp F11  &kp F12
+                &trans       &studio_unlock  &out OUT_USB  &out OUT_BLE  &out OUT_TOG  &to GAME          &to GAME      &kp C_PREV  &kp C_PP      &kp C_NEXT    &kp F11  &kp F12
                 &trans       &bt BT_CLR      &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3      &bt BT_SEL 4  &kp C_MUTE  &kp C_VOL_DN  &kp C_VOL_UP  &trans   &trans
                                                            &trans        &trans        &trans            &trans        &trans      &trans
             >;
         };
 
         /*
-         * Layer 4: GAME — Left-Half Gaming + Right-Half Chat Launchpad
+         * Layer 4: GAME — Exact Original Left-Hand Layout + Atomic Chat Launchpad
          *
-         * Left Half:  0ms pure &kp bindings (Ring=A, Middle=W, Index=D, Pos 27=S)
-         * Right Half: Chat Launchpad
-         *   - Pos 18 (Q pos):  Chat via Y     (&chat_open Y)
-         *   - Pos 19 (N pos):  Chat via ENTER (&chat_open RET)  <-- Right Index Home
-         *   - Pos 20 (A pos):  Chat via T     (&chat_open T)    <-- Right Middle Home
-         *   - Pos 21 (E pos):  Chat via /     (&chat_open FSLH) <-- Right Ring Home
-         *   - Pos 39 (GUI):    Backspace      (&kp BSPC)
-         *   - Pos 40 (R pos):  Silent Chat    (&chat_silent - for search bars/menus)
-         *   - Pos 11 / 41:     Hard Exit GAME (&to BASE)
+         * Left Half (100% Restored to Your Exact Positions):
+         *   Row 1 (00-05): ESC    TAB    Q   E   R   T
+         *   Row 2 (12-17): LCTRL  LSHFT  A   W   D   F   (Pos 13 = LSHFT, 14 = A, 15 = W, 16 = D)
+         *   Row 3 (24-29): LALT   Z      X   S   C   V   (Pos 27 = S)
+         *   Thumbs(36-38): G      SPACE  mo(G_EXT)
+         *
+         * Right Half (Chat Launchpad):
+         *   - Pos 18 (Q pos):  &chat_open Y
+         *   - Pos 19 (N pos):  &chat_open RET
+         *   - Pos 20 (A pos):  &chat_open T
+         *   - Pos 21 (E pos):  &chat_open FSLH
+         *   - Pos 39 (Thumb):  &kp BSPC
+         *   - Pos 40 (Thumb):  &chat_silent
+         *   - Pos 11 / 41:     &to BASE
          */
         game_layer {
             display-name = "GAME";
             bindings = <
-                &kp ESC    &kp TAB    &kp Q  &kp E  &kp R      &kp T          &none     &none           &none         &none            &none  &to BASE
+                &kp ESC    &kp TAB    &kp Q  &kp E  &kp R      &kp T          &none         &none           &none         &none            &none  &to BASE
                 &kp LCTRL  &kp LSHFT  &kp A  &kp W  &kp D      &kp F          &chat_open Y  &chat_open RET  &chat_open T  &chat_open FSLH  &none  &none
-                &kp LALT   &kp Z      &kp X  &kp S  &kp C      &kp V          &none     &none           &none         &none            &none  &none
-                                             &kp G  &kp SPACE  &mo G_EXT      &kp BSPC  &chat_silent    &to BASE
+                &kp LALT   &kp Z      &kp X  &kp S  &kp C      &kp V          &none         &none           &none         &none            &none  &none
+                                             &kp G  &kp SPACE  &mo G_EXT      &kp BSPC      &chat_silent    &to BASE
             >;
         };
 
         /*
-         * Layer 5: G_EXT — Situational / Far-Reach Sub-Layer (Hold Pos 38 in GAME)
+         * Layer 5: G_EXT — Exact Original Left-Hand Positions
+         *
+         * Pos 14 (A), Pos 15 (W), Pos 16 (D), and Pos 27 (S) are &trans so movement never stops!
          *
          * Exit   1      2      3      4      5          ---  ---  ---  ---  ---  ---
-         * F1     O      A      W      D      M (Map)    ---  ---  ---  ---  ---  ---
-         * F2     P      U      S      B      I (Inv)    ---  ---  ---  ---  ---  ---
+         * F1     O      A(tr)  W(tr)  D(tr)  M (Map)    ---  ---  ---  ---  ---  ---
+         * F2     P      U      S(tr)  B      I (Inv)    ---  ---  ---  ---  ---  ---
          *                      N      Y      [HELD]     ---  ---  ---
          */
         game_ext_layer {
@@ -220,21 +333,19 @@ macros {
         /*
          * Layer 6: G_CHAT — Transparent Chat Interceptor
          *
-         * Active ONLY while typing an in-game message.
-         * Because &chat_open turns GAME off, all &trans keys fall straight through
-         * to BASE (Racket), NAV, and SYM!
+         * Intercepts ONLY your actual ESC key (Pos 24) and RET thumb key (Pos 39)
+         * so TAB, \, `, *, and BSPC work 100% normally across BASE, NAV, and SYM!
          *
-         *   - Pos 00 (Top-Left Pinky):     Sends ESC + Returns to GAME
-         *   - Pos 11 (Top-Right Pinky):    Panic exit straight to BASE (&to BASE)
-         *   - Pos 35 (Bot-Right Pinky):    Sends RET + Returns to GAME
+         *   - Pos 24 (Bot-Left Pinky, ESC):  Sends ESC + Returns to GAME (&chat_exit ESC)
+         *   - Pos 39 (Right Inner Thumb, RET): Sends RET + Returns to GAME (&chat_exit RET)
          */
         game_chat_layer {
             display-name = "G_CHAT";
             bindings = <
-                &chat_exit ESC  &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &to BASE
-                &trans          &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &trans
-                &trans          &trans  &trans  &trans  &trans  &trans      &trans  &trans  &trans  &trans  &trans  &chat_exit RET
-                                                &trans  &trans  &trans      &trans  &trans  &trans
+                &trans          &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
+                &trans          &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
+                &chat_exit ESC  &trans  &trans  &trans  &trans  &trans      &trans          &trans  &trans  &trans  &trans  &trans
+                                                &trans  &trans  &trans      &chat_exit RET  &trans  &trans
             >;
         };
     };
