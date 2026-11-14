@@ -184,6 +184,20 @@
             require-prior-idle-ms = <125>;
             bindings = <&mm_pair_comma>, <&kp>;
         };
+
+        smart_sqt: smart_quote_morph {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&ht_sqt 0 SQT>, <&ht_dqt 0 DQT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
+
+        smart_comma: smart_comma_morph {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp COMMA>, <&ht_ang 0 LT>;
+            mods = <(MOD_LSFT|MOD_RSFT)>;
+        };
     };
 
     conditional_layers {
@@ -330,6 +344,34 @@
                 = <&macro_param_1to1>
                 , <&kp MACRO_PLACEHOLDER>
                 , <&to GAME>
+                ;
+        };
+
+        /*
+         * Prepending <&macro_tap &none> absorbs the ZMK Issue #3279
+         * quick-release glitch before releasing Shift and tapping <|> or "|"!
+         */
+        pair_ang: pair_ang {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings
+                = <&macro_tap &none>
+                , <&macro_release &kp LSHFT &kp RSHFT>
+                , <&macro_tap &kp LT &kp GT &kp LEFT>
+                ;
+        };
+
+        pair_dqt: pair_dqt {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <10>;
+            tap-ms = <10>;
+            bindings
+                = <&macro_tap &none>
+                , <&macro_release &kp LSHFT &kp RSHFT>
+                , <&macro_tap &kp DQT &kp DQT &kp LEFT>
                 ;
         };
     };
