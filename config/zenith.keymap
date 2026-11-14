@@ -51,6 +51,7 @@
 };
 
 / {
+    / {
     behaviors {
         /*
          * Smart Shift (Mod-Morph):
@@ -61,26 +62,6 @@
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
             bindings = <&sk LSHFT>, <&caps_word>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-
-        /*
-         * Hold-Action Mod-Morphs (Evaluated AFTER hold-tap resolves to Hold!)
-         * Putting mod-morph INSIDE the hold action (Hold-Tap -> Mod-Morph -> Macro)
-         * avoids ZMK Issues #3161 and #3279 while allowing Shift+Tap to be a 100%
-         * native &kp!
-         */
-        mm_pair_quote: mod_morph_pair_quote {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&pair_sqt>, <&pair_dqt>;
-            mods = <(MOD_LSFT|MOD_RSFT)>;
-        };
-
-        mm_pair_comma: mod_morph_pair_comma {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&kp COMMA>, <&pair_ang>;
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
 
@@ -154,38 +135,10 @@
         };
 
         /*
-         * Shift-Aware Quote Hold-Tap for BASE Pos 32 (&ht_sqt_smart 0 SQT):
-         * - Unshifted Tap:  '   (native &kp SQT)
-         * - Shifted Tap:    "   (native Shift + &kp SQT)
-         * - Unshifted Hold: '|' (&pair_sqt)
-         * - Shifted Hold:   "|" (&pair_dqt)
+         * Shift-Aware Quote on BASE Pos 32 (&smart_sqt):
+         * - Unshifted: Tap = '  | Hold = '|'
+         * - Shifted:   Tap = "  | Hold = "|"
          */
-        ht_sqt_smart: hold_tap_sqt_smart {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "tap-preferred";
-            tapping-term-ms = <190>;
-            quick-tap-ms = <150>;
-            bindings = <&mm_pair_quote>, <&kp>;
-        };
-
-        /*
-         * Shift-Aware Comma / Angle Hold-Tap for BASE Pos 10 (&ht_comma_smart 0 COMMA):
-         * - Unshifted Tap:  ,   (native &kp COMMA)
-         * - Shifted Tap:    <   (native Shift + &kp COMMA)
-         * - Unshifted Hold: ,   (&kp COMMA)
-         * - Shifted Hold:   <|> (&pair_ang — C++ templates & #include <|>!)
-         */
-        ht_comma_smart: hold_tap_comma_smart {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "tap-preferred";
-            tapping-term-ms = <190>;
-            quick-tap-ms = <150>;
-            require-prior-idle-ms = <125>;
-            bindings = <&mm_pair_comma>, <&kp>;
-        };
-
         smart_sqt: smart_quote_morph {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
@@ -193,6 +146,11 @@
             mods = <(MOD_LSFT|MOD_RSFT)>;
         };
 
+        /*
+         * Shift-Aware Comma / Angle on BASE Pos 10 (&smart_comma):
+         * - Unshifted: Pure ,
+         * - Shifted:   Tap = <  | Hold = <|>
+         */
         smart_comma: smart_comma_morph {
             compatible = "zmk,behavior-mod-morph";
             #binding-cells = <0>;
@@ -241,18 +199,15 @@
             tap-ms = <10>;
             bindings = <&kp LBRC &kp RBRC &kp SEMI &kp LEFT &kp LEFT>;
         };
-        /*
-         * Angle brackets <|> for C++ templates:
-         * Uses &macro_release to clear any held/sticky Shift first,
-         * then explicitly switches back to &macro_tap to type < > Left!
-         */
+        /* Angle brackets <|> for C++ templates */
         pair_ang: pair_ang {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
             bindings
-                = <&macro_release &kp LSHFT &kp RSHFT>
+                = <&macro_tap &none>
+                , <&macro_release &kp LSHFT &kp RSHFT>
                 , <&macro_tap &kp LT &kp GT &kp LEFT>
                 ;
         };
@@ -264,18 +219,15 @@
             tap-ms = <10>;
             bindings = <&kp SQT &kp SQT &kp LEFT>;
         };
-        /*
-         * Double quotes "|":
-         * Uses &macro_release to clear any held/sticky Shift first,
-         * then explicitly switches back to &macro_tap to type " " Left!
-         */
+        /* Double quotes "|" */
         pair_dqt: pair_dqt {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <10>;
             tap-ms = <10>;
             bindings
-                = <&macro_release &kp LSHFT &kp RSHFT>
+                = <&macro_tap &none>
+                , <&macro_release &kp LSHFT &kp RSHFT>
                 , <&macro_tap &kp DQT &kp DQT &kp LEFT>
                 ;
         };
@@ -304,10 +256,7 @@
             bindings = <&kp COLON &kp COLON>;
         };
 
-        /*
-         * 1. Opens in-game chat with a specific key (RET, T, Y, FSLH),
-         *    and atomically switches to G_CHAT (which disables GAME and exposes BASE).
-         */
+        /* 1. Opens in-game chat and switches to G_CHAT */
         chat_open: chat_open {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -320,10 +269,7 @@
                 ;
         };
 
-        /*
-         * 2. Enters typing mode WITHOUT firing a hotkey first
-         *    (for clicking into inventory search bars, map markers, or Steam overlay).
-         */
+        /* 2. Enters G_CHAT without firing a hotkey */
         chat_silent: chat_silent {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -332,10 +278,7 @@
             bindings = <&to G_CHAT>;
         };
 
-        /*
-         * 3. Sends RET or ESC to close the in-game chat box,
-         *    and atomically switches back to GAME (disabling G_CHAT).
-         */
+        /* 3. Sends RET or ESC to close chat and returns to GAME */
         chat_exit: chat_exit {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -345,34 +288,6 @@
                 = <&macro_param_1to1>
                 , <&kp MACRO_PLACEHOLDER>
                 , <&to GAME>
-                ;
-        };
-
-        /*
-         * Prepending <&macro_tap &none> absorbs the ZMK Issue #3279
-         * quick-release glitch before releasing Shift and tapping <|> or "|"!
-         */
-        pair_ang: pair_ang {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            wait-ms = <10>;
-            tap-ms = <10>;
-            bindings
-                = <&macro_tap &none>
-                , <&macro_release &kp LSHFT &kp RSHFT>
-                , <&macro_tap &kp LT &kp GT &kp LEFT>
-                ;
-        };
-
-        pair_dqt: pair_dqt {
-            compatible = "zmk,behavior-macro";
-            #binding-cells = <0>;
-            wait-ms = <10>;
-            tap-ms = <10>;
-            bindings
-                = <&macro_tap &none>
-                , <&macro_release &kp LSHFT &kp RSHFT>
-                , <&macro_tap &kp DQT &kp DQT &kp LEFT>
                 ;
         };
     };
@@ -402,9 +317,9 @@
         base_layer {
             display-name = "BASE";
             bindings = <
-                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O              &kp U     &ht_comma_smart 0 COMMA  &kp BSLH
-                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A              &kp E     &kp I                    &kp MINUS
-                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &ht_sqt_smart 0 SQT &kp FSLH  &kp DOT                  &kp BSPC
+                &kp TAB      &kp F  &kp D  &kp L     &kp W      &kp J        &kp SEMI  &kp B  &kp O      &kp U     &smart_comma &kp BSLH
+                &smart_shft  &kp S  &kp T  &kp H     &kp C      &kp Y        &kp Q     &kp N  &kp A      &kp E     &kp I        &kp MINUS
+                &kp ESC      &kp X  &kp K  &kp M     &kp G      &kp V        &kp Z     &kp P  &smart_sqt &kp FSLH  &kp DOT      &kp BSPC
                                            &kp BSPC  &kp SPACE  &mo NAV      &kp RET   &kp R  &mo SYM
             >;
         };
