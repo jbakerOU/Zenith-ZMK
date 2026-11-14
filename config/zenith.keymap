@@ -34,12 +34,6 @@
     quick-tap-ms = <175>;
 };
 
-/*
- * Note: 'quick-release' is intentionally omitted here so that tapping
- * Sticky Shift (&smart_shft) followed by holding a Hold-Tap key on BASE
- * (like ' for "|" or , for <|>) keeps Shift active until the hold-tap
- * timer resolves (avoids ZMK Issue #3279).
- */
 &sk {
     release-after-ms = <1000>;
     quick-release;
@@ -51,7 +45,6 @@
 };
 
 / {
-    / {
     behaviors {
         /*
          * Smart Shift (Mod-Morph):
@@ -66,7 +59,7 @@
         };
 
         /*
-         * Tap = Single Symbol           (  [  {  }  `  '  "  <
+         * Tap = Single Opening Symbol   (  [  {  }  `  '  "  <
          * Hold = Auto-Pair + Cursor In  () [] {} {}; `` '' "" <>
          */
         ht_par: hold_tap_paren {
@@ -135,7 +128,7 @@
         };
 
         /*
-         * Shift-Aware Quote on BASE Pos 32 (&smart_sqt):
+         * Shift-Aware Quote on BASE Pos 32:
          * - Unshifted: Tap = '  | Hold = '|'
          * - Shifted:   Tap = "  | Hold = "|"
          */
@@ -147,9 +140,9 @@
         };
 
         /*
-         * Shift-Aware Comma / Angle on BASE Pos 10 (&smart_comma):
-         * - Unshifted: Pure ,
-         * - Shifted:   Tap = <  | Hold = <|>
+         * Shift-Aware Comma / Angle Bracket on BASE Pos 10:
+         * - Unshifted: Pure , (zero hold delay for normal typing!)
+         * - Shifted:   Tap = <  | Hold = <|> (C++ templates & includes!)
          */
         smart_comma: smart_comma_morph {
             compatible = "zmk,behavior-mod-morph";
@@ -256,7 +249,10 @@
             bindings = <&kp COLON &kp COLON>;
         };
 
-        /* 1. Opens in-game chat and switches to G_CHAT */
+        /*
+         * 1. Opens in-game chat with a specific key (RET, T, Y, FSLH),
+         *    and atomically switches to G_CHAT (which disables GAME and exposes BASE).
+         */
         chat_open: chat_open {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -269,7 +265,10 @@
                 ;
         };
 
-        /* 2. Enters G_CHAT without firing a hotkey */
+        /*
+         * 2. Enters typing mode WITHOUT firing a hotkey first
+         *    (for clicking into inventory search bars, map markers, or Steam overlay).
+         */
         chat_silent: chat_silent {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
@@ -278,7 +277,10 @@
             bindings = <&to G_CHAT>;
         };
 
-        /* 3. Sends RET or ESC to close chat and returns to GAME */
+        /*
+         * 3. Sends RET or ESC to close the in-game chat box,
+         *    and atomically switches back to GAME (disabling G_CHAT).
+         */
         chat_exit: chat_exit {
             compatible = "zmk,behavior-macro-one-param";
             #binding-cells = <1>;
@@ -298,17 +300,6 @@
         /*
          * Layer 0: BASE (Racket by GalileoBlues)
          *
-         * Zero-Latency Outer Pinkies & Thumbs (Modifiers live on NAV home row):
-         * - Pos 00: Pure TAB
-         * - Pos 10: Smart Comma (&ht_comma_smart 0 COMMA: Tap = , | Shift+Tap = < | Shift+Hold = <|>)
-         * - Pos 11: Pure BSLH (\)
-         * - Pos 12: Smart Shift (1 tap = Sticky Shift, 2 taps = CAPS_WORD)
-         * - Pos 24: Pure ESC (0ms key-down!)
-         * - Pos 32: Smart Quote (&ht_sqt_smart 0 SQT: Tap = ' | Hold = '|' | Shift+Tap = " | Shift+Hold = "|")
-         * - Pos 35: Pure BSPC
-         * - Pos 36 (Left Outer Thumb):  Pure BSPC (0ms key-down + instant repeat!)
-         * - Pos 39 (Right Inner Thumb): Pure RET  (0ms key-down!)
-         *
          * Tab         F    D    L     W    J      ;    B    O     U     ,     \
          * SmartShft   S    T    H     C    Y      Q    N    A     E     I     -
          * Esc         X    K    M     G    V      Z    P    '     /     .     Bksp
@@ -327,12 +318,6 @@
         /*
          * Layer 1: NAV
          *
-         * Cross-OS Undo / Cut / Copy / Paste:
-         * - Top Row (01-04):    macOS (Cmd + Z/X/C/V)
-         * - Home Row (13-16):   One-handed Modifiers (Alt, GUI, Shft, Ctrl)
-         * - Bottom Row (25-28): Windows/Linux (Ctrl + Z/X/C/V)
-         * - Right Side:         Vim/Arrow Nav + C++ (:: and ->) + Underscore (_)
-         *
          * Esc   mUndo mCut  mCopy mPste ---      Ins   PgDn  PgUp  Del    ---   ---
          * ---   Alt   GUI   Shft  Ctrl  ---      Left  Down  Up    Right  Bksp  _
          * ---   wUndo wCut  wCopy wPste ---      ---   ::    ->    Home   End   ---
@@ -349,17 +334,7 @@
         };
 
         /*
-         * Layer 2: SYM (Continuous Number & Math/Code Entry + Auto-Pair Hold-Taps)
-         *
-         * Hold-to-Auto-Close Pairs (places cursor inside):
-         * - Pos 00 (`): Tap = `  | Hold = `|`
-         * - Pos 19 ((): Tap = (  | Hold = (|)
-         * - Pos 26 ({): Tap = {  | Hold = {|}
-         * - Pos 27 (}): Tap = }  | Hold = {|}; (C++ struct/class/lambda close!)
-         * - Pos 28 (\): Tap = \  | Hold = "|"  (Direct unshifted double-quote pair on SYM!)
-         * - Pos 29 (|): Tap = |  | Hold = <|>  (Direct unshifted angle-bracket pair on SYM!)
-         * - Pos 31 ([): Tap = [  | Hold = [|]
-         * - Pos 35 (,): Tap = ,  | Hold = <|>  (Bonus: Hold comma on SYM also gives <|>!)
+         * Layer 2: SYM
          *
          * `     1    2    3    4    5      6    7    8    9    0    *
          * ~     !    @    #    $    %      ^    (    )    =    +    -
@@ -378,13 +353,6 @@
 
         /*
          * Layer 3: ADJ — Active while NAV + SYM are held
-         *
-         * Uses &to GAME on Pos 17 / 18 so entering GAME always starts from a clean state.
-         *
-         * Boot   F1     F2    F3    F4    F5       F6    F7      F8        F9        F10   Boot
-         * ---    Unlck  USB   BLE   Tog   GAME     GAME  Prev    Play/Pse  Next      F11   F12
-         * ---    btclr  bt0   bt1   bt2   bt3      bt4   Mute    VolDn     VolUp     ---   ---
-         *                     ---   ---   ---      ---   ---     ---
          */
         adjust_layer {
             display-name = "ADJ";
@@ -398,21 +366,6 @@
 
         /*
          * Layer 4: GAME — Left-Hand Layout + Atomic Chat Launchpad
-         *
-         * Left Half:
-         *   Row 1 (00-05): ESC    Q      E   TAB R   T
-         *   Row 2 (12-17): LCTRL  LSHFT  A   W   D   F   (Pos 13 = LSHFT, 14 = A, 15 = W, 16 = D)
-         *   Row 3 (24-29): LALT   Z      X   S   C   V   (Pos 27 = S)
-         *   Thumbs(36-38): G      SPACE  mo(G_EXT)
-         *
-         * Right Half (Chat Launchpad):
-         *   - Pos 18 (Q pos):  &chat_open Y
-         *   - Pos 19 (N pos):  &chat_open RET
-         *   - Pos 20 (A pos):  &chat_open T
-         *   - Pos 21 (E pos):  &chat_open FSLH
-         *   - Pos 39 (Thumb):  &kp BSPC
-         *   - Pos 40 (Thumb):  &chat_silent
-         *   - Pos 11 / 41:     &to BASE
          */
         game_layer {
             display-name = "GAME";
@@ -425,14 +378,7 @@
         };
 
         /*
-         * Layer 5: G_EXT — Exact Original Left-Hand Positions
-         *
-         * Pos 14 (A), Pos 15 (W), Pos 16 (D), and Pos 27 (S) are &trans so movement never stops!
-         *
-         * Exit   1      2      3      4      5           ---  ---  ---  ---  ---  ---
-         * F1     O      A(tr)  W(tr)  D(tr)  M (Map)     ---  ---  ---  ---  ---  ---
-         * F2     P      U      S(tr)  B      I (Inv)     ---  ---  ---  ---  ---  ---
-         *                      N      Y      [HELD]      ---  ---  ---
+         * Layer 5: G_EXT
          */
         game_ext_layer {
             display-name = "G_EXT";
@@ -446,12 +392,6 @@
 
         /*
          * Layer 6: G_CHAT — Transparent Chat Interceptor
-         *
-         * Intercepts ONLY your actual ESC key (Pos 24) and RET thumb key (Pos 39)
-         * so TAB, \, `, *, and BSPC work 100% normally across BASE, NAV, and SYM!
-         *
-         *   - Pos 24 (Bot-Left Pinky, ESC):  Sends ESC + Returns to GAME (&chat_exit ESC)
-         *   - Pos 39 (Right Inner Thumb, RET): Sends RET + Returns to GAME (&chat_exit RET)
          */
         game_chat_layer {
             display-name = "G_CHAT";
